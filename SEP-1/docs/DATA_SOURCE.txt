@@ -1,0 +1,5 @@
+Power BI connects to:
+Database: physionet-data
+Schema: mimiciii_clinical
+Object: sep1_bundle_flags_final
+Effective query: SELECT * FROM [mimiciii_clinical].[sep1_bundle_flags_final];
