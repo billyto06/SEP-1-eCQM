@@ -1,98 +1,151 @@
-SEP-1 Sepsis Bundle: SQL + Power BI (Synthetic Data)
+# SEP-1 Sepsis Bundle: SQL + Power BI (Synthetic Data)
 
-This project implements the SEP-1 sepsis bundle in both BigQuery SQL and SQL Server T-SQL, then visualizes performance in Power BI using synthetic data.
+This project implements the **SEP-1 sepsis bundle** logic in:
 
-What is SEP-1
+- **BigQuery SQL**
+- **SQL Server T-SQL**
 
-SEP-1 is a quality measure for the early management of severe sepsis and septic shock. In plain terms, it checks whether key care steps happened on time after “sepsis time zero.”
+…and then visualizes performance in **Power BI** using **synthetic data only**.
 
-3-hour bundle:
+The goal is **reproducible analytics**, not clinical guidance.
 
-Serum lactate measured
+---
 
-Blood cultures collected before antibiotics
+## Table of Contents
 
-Broad-spectrum antibiotics started
+1. [Background: What is SEP-1?](#background-what-is-sep-1)
+2. [What This Project Does](#what-this-project-does)
+3. [Repository Structure](#repository-structure)
+4. [How to Use the Power BI Report](#how-to-use-the-power-bi-report)
+   - [Fastest Path (CSV only)](#fastest-path-csv-only)
+   - [Using SQL Server](#using-sql-server)
+5. [Power BI Pages](#power-bi-pages)
+6. [Data Notes](#data-notes)
+7. [Disclaimers](#disclaimers)
 
-For septic shock: adequate fluids
+---
 
-6-hour bundle:
+## Background: What is SEP-1?
 
-For severe sepsis: repeat lactate if the initial value was greater than 2 mmol/L
+**SEP-1** is a quality measure for early management of **severe sepsis** and **septic shock**.  
+In plain language, it checks whether key care steps happened on time after **“sepsis time zero.”**
 
-For septic shock: vasopressors if needed and evidence of perfusion target workup (often satisfied by persistent hypotension or initial lactate greater than or equal to 4)
+### 3-hour bundle
 
-This repo focuses on logic and reproducible analytics rather than clinical guidance.
+- Serum lactate measured  
+- Blood cultures collected *before* antibiotics  
+- Broad-spectrum antibiotics started  
+- For septic shock: adequate fluids
 
-What my code does
+### 6-hour bundle
 
-Cohort and time zero: Finds suspected sepsis encounters and calculates sepsis time zero from first qualifying events.
+- For severe sepsis: repeat lactate if initial value > 2 mmol/L  
+- For septic shock:
+  - Vasopressors if needed  
+  - Evidence of perfusion-target workup  
+    - (often satisfied by persistent hypotension or initial lactate ≥ 4)
 
-Component flags: Derives on-time indicators for each SEP-1 step (lactate, culture before antibiotics, antibiotics within 3 hours, fluids for shock, repeat lactate logic, vasopressors path).
+This repo focuses on **logic and analytics** implementing these rules, not on clinical decision-making.
 
-Bundle composites: Builds 3-hour and 6-hour pass flags and an overall pass flag that respects the clinical paths.
+---
 
-BI-ready view: Exposes a tidy final view for Power BI with one row per admission plus all component flags and composites.
+## What This Project Does
 
-What is included
+### 1. Cohort + Time Zero
 
-sql/sep1_ecqm_cohort_bundle.sql — BigQuery SQL version
+- Identifies **suspected sepsis encounters**
+- Computes **sepsis time zero** from the first qualifying events
 
-sql/SEP-1_SQL_SERVER.sql — SQL Server version
+### 2. Component Flags
 
-sql/10_view_sep1_bundle_flags_final.sql — the exact view consumed by the report
+Builds on-time indicators for each SEP-1 step, including:
 
-powerbi/sep1-report.pbit — Power BI template with model, measures, and visuals
+- Lactate measurement
+- Blood culture before antibiotics
+- Antibiotics within 3 hours
+- Adequate fluids for septic shock
+- Repeat lactate when required
+- Vasopressors path and perfusion target workup
 
-data/sep1_bundle_flags_final_sample.csv — synthetic snapshot of the final view for quick demos
+### 3. Bundle Composites
 
-screenshots/page1_overview.png, screenshots/page2_qa.png — report previews
+- Derives **3-hour** and **6-hour** bundle pass flags
+- Builds an **overall SEP-1 pass** flag that respects the relevant clinical path (severe sepsis vs septic shock)
 
-Optional items you might see:
+### 4. BI-Ready Final View
 
-powerbi/sep1-report-demo.pbix — a PBIX that already contains synthetic data
+- Exposes a **tidy, analytics-ready view** for Power BI
+- One row per admission, with:
+  - All component flags
+  - Bundle composites
+  - IDs and timestamps needed for QA/drill-down
 
-sql/demo_data/*.sql — seeders or patches used only to generate synthetic demo rows
+---
 
-How to open the report
+## Repository Structure
 
-Fastest (no database needed)
+### SQL
 
-Open powerbi/sep1-report.pbit
+- `sql/sep1_ecqm_cohort_bundle.sql`  
+  BigQuery SQL implementation.
 
-When prompted for data, point the fact table to data/sep1_bundle_flags_final_sample.csv
+- `sql/SEP-1_SQL_SERVER.sql`  
+  SQL Server implementation.
 
-The visuals and measures will render on the sample
+- `sql/10_view_sep1_bundle_flags_final.sql`  
+  Final view definition used by the Power BI report.
 
-Using SQL Server
+### Power BI
 
-Create the final view using sql/10_view_sep1_bundle_flags_final.sql in your database
+- `powerbi/sep1-report.pbit`  
+  Power BI **template** with:
+  - Data model
+  - Measures
+  - Visuals wired to the final view.
 
-In Power BI, open powerbi/sep1-report.pbit and enter your Server and Database
+- *(Optional)* `powerbi/sep1-report-demo.pbix`  
+  PBIX version that already contains synthetic demo data (if present).
 
-Load the view [mimiciii_clinical].[sep1_bundle_flags_final]
+### Data (Synthetic Only)
 
-Example query used by the report:
+- `data/sep1_bundle_flags_final_sample.csv`  
+  Synthetic snapshot of the final view for quick demos and offline use.
 
-SELECT *
-FROM [mimiciii_clinical].[sep1_bundle_flags_final];
+### Screenshots
 
-Pages in the Power BI report
+- `screenshots/page1_overview.png`  
+- `screenshots/page2_qa.png`  
 
-Page 1: Overview — admissions by month, component tiles, overall bundle rate, and a combo chart that shows volume next to performance
+Preview images of the main report pages.
 
-Page 2: QA and drill — patient-level table with green/red flags and component KPIs for quick troubleshooting
+### Demo / Seed Data (Optional)
 
-Data notes
+- `sql/demo_data/*.sql`  
+  Seeder scripts / patches used to generate synthetic demo rows (not required for using the logic itself).
 
-The report uses synthetic data only.
+---
 
-During development I validated logic using the MIMIC-III schema and event patterns. The original MIMIC-III data is not included here for privacy and licensing reasons.
+## How to Use the Power BI Report
 
-The BigQuery and SQL Server scripts are written to run independently. You can adopt either platform.
+### Fastest Path (CSV only)
 
-Disclaimers
+This option does **not** require a database.
 
-This is an analytics demo. It is not clinical advice.
+1. Open:  
+   `powerbi/sep1-report.pbit`
+2. When prompted for data, point the **fact table** to:  
+   `data/sep1_bundle_flags_final_sample.csv`
+3. Load the model.  
+   - All visuals and measures will render against the sample synthetic data.
 
-SEP-1 rules evolve. Always review against your organization’s current measure specification.
+---
+
+### Using SQL Server
+
+1. Create the final view in your database using:  
+   `sql/10_view_sep1_bundle_flags_final.sql`
+
+   This should create:
+
+   ```sql
+   [mimiciii_clinical].[sep1_bundle_flags_final]
