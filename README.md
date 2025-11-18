@@ -113,8 +113,8 @@ Builds on-time indicators for each SEP-1 step, including:
 
 ### Screenshots
 
-- `screenshots/page1_overview.png`  
-- `screenshots/page2_qa.png`  
+<img width="2611" height="1396" alt="image" src="https://github.com/user-attachments/assets/d0134e60-832d-4e5d-b741-2a7b404c3b11" />
+
 
 Preview images of the main report pages.
 
